@@ -17,6 +17,7 @@ export async function login(req, res) {
   if (!bcrypt.compareSync(password, user[0].password)) {
     return res.sendStatus(401);
   }
+  
   const token = uuid();
   await connection.query(
     'INSERT INTO sessions (token, "userId") VALUES ($1, $2)',
