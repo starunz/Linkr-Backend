@@ -1,4 +1,4 @@
-function validateSchema(schema) {
+function validateSchemaMiddleware(schema) {
 
     return (req, res, next) => {
       const validation = schema.validate(req.body, { abortEarly: false });
@@ -13,4 +13,4 @@ function validateSchema(schema) {
     };
 }
 
-export default validateSchema;
+export default validateSchemaMiddleware;
