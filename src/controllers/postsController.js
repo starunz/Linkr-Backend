@@ -1,17 +1,26 @@
 import connection from '../db.js';
 import urlMetadata from 'url-metadata';
+import { insertHashtags } from './hashtagsController.js';
 
 export async function publishPosts(req, res) {
-
     const {userId, link, description} = req.body;
+
+    const hashtags = description.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [];
+
     try {
         await connection.query(`
             INSERT INTO posts
             ("userId", link, description)
-            VALUES ($1, $2, $3)
+            VALUES ($1, $2, $3);
         `, [userId, link, description]);
 
-        res.sendStatus(200);
+        const {rows: postId} = await connection.query(`
+            SELECT MAX(id) FROM posts
+        `); 
+
+        await insertHashtags(hashtags, postId[0].max);
+
+        res.sendStatus(201);
 
     } catch (error) {
         console.log(error.message);
@@ -20,7 +29,6 @@ export async function publishPosts(req, res) {
 }
 
 export async function getPosts(req, res) {
-
     try {
         const {rows: posts} = await connection.query(`
             SELECT 
