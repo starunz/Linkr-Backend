@@ -28,3 +28,19 @@ export async function insertHashtags(hashtags, postId){
         `, [postId, hashtagId[0].max]);
     }
 }
+
+export async function getTrendingHashtags(req, res){
+    try {
+        const {rows: hashtags} = await connection.query(`
+        SELECT hash.name, COUNT(hp.*)  
+        FROM hashtagsPosts hp
+        INNER JOIN hashtags hash on hash.id = hp."hashtagId"
+        GROUP BY hash.name
+        ORDER BY COUNT DESC, hash.name
+        LIMIT 9;
+        `);
+        res.status(200).send(hashtags);
+    } catch (error) {
+        return error.message;
+    }
+}
