@@ -12,22 +12,17 @@ export async function publishPosts(req, res) {
         descriptionResolve.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [] 
     ) : []);
 
-    console.log(hashtags);
-    
     try {
         const {image, description: descriptionLink, title} = await urlMetadata(link);
 
-        await connection.query(`
-            INSERT INTO posts
-            ("userId", link, description)
-            VALUES ($1, $2, $3);
-        `, [userId, link, descriptionResolve]);
-
         const {rows: postId} = await connection.query(`
-            SELECT MAX(id) FROM posts
-        `); 
+            INSERT INTO posts
+            ("userId", link, description, "descriptionLinK", "imageLink", "titleLink")
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+        `, [userId, link, descriptionResolve, descriptionLink, image, title]);
 
-        await insertHashtags(hashtags, postId[0].max);
+        await insertHashtags(hashtags, postId[0].id);
 
         res.sendStatus(201);
 
@@ -41,7 +36,7 @@ export async function getPosts(req, res) {
     try {
         const {rows: posts} = await connection.query(`
             SELECT 
-                p.description, u."userName" author, u."photoUrl", p.link
+                p.*, u."userName" author, u."photoUrl"
             FROM posts p
             LEFT JOIN users u on p."userId" = u.id 
             GROUP BY description, author, "photoUrl", p.id
