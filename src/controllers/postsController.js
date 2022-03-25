@@ -37,7 +37,11 @@ export async function getPosts(req, res) {
     try {
         const {rows: posts} = await connection.query(`
             SELECT 
+<<<<<<< HEAD
                 p.*, u."userName" author, u."photoUrl"
+=======
+                p.id "postId", p.description, u."userName" author, u."photoUrl", p.link
+>>>>>>> 1a74d46b7dcaf1f0e556545b847c0e064f420623
             FROM posts p
             LEFT JOIN users u on p."userId" = u.id 
             GROUP BY description, author, "photoUrl", p.id
@@ -50,6 +54,82 @@ export async function getPosts(req, res) {
     } catch (error) {
         console.log(error.message);
         res.sendStatus(500);
+    }
+
+}
+
+export async function like(req, res) {
+    const userId = req.body.userId;
+    const postId = req.body.postId;
+
+    try {
+        const isLiked = await connection.query(`
+            SELECT * 
+            FROM likes 
+            WHERE likes."postId" = $1
+            AND likes."userId" = $2
+        `, [postId, userId])
+        
+        if(isLiked.rows.length === 0) {
+            
+            await connection.query(`
+                INSERT INTO 
+                    likes ("userId", "postId") 
+                VALUES ($1, $2)
+            `, [userId, postId])
+
+            return res.sendStatus(201)
+        }
+
+        await connection.query(`
+            DELETE FROM likes
+                WHERE "userId" = $1
+                AND "postId" = $2
+        
+        `, [userId, postId])
+
+        res.sendStatus(201)
+            
+    } catch (error) {
+        res.sendStatus(500)
+    }
+}
+
+export async function getLike(req, res) {
+    const { postId } = req.params;
+    const userId = res.locals.userId;
+    let isLiked = false;
+
+    try {
+        
+        const likes = await connection.query(`
+            SELECT 
+                likes."postId", COUNT("userId") 
+            FROM likes 
+            WHERE likes."postId" = $1
+            GROUP BY likes."postId";
+        `, [parseInt(postId)]) 
+     
+        if(likes.rows.length === 0 ) {
+            return res.status(200).send([{ postId: parseInt(postId), count: 0, isLiked: isLiked}])
+        }
+
+        const userLike = await connection.query(`
+            SELECT * 
+            FROM likes
+            WHERE likes."postId" = $1
+            AND likes."userId" = $2
+        `, [parseInt(postId), userId])
+
+        if (userLike.rows.length !== 0) {
+            isLiked = true;
+        }
+
+        likes.rows[0].isLiked = isLiked;
+        res.status(200).send(likes.rows)
+
+    } catch (error) {
+        res.sendStatus(500)
     }
 
 }
