@@ -23,5 +23,5 @@ export async function login(req, res) {
     'INSERT INTO sessions (token, "userId") VALUES ($1, $2)',
     [token, user[0].id]
   );
-  return res.send(token);
+  return res.send({token: token, id: user[0].id});
 }
