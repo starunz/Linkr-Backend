@@ -33,15 +33,11 @@ export async function publishPosts(req, res) {
 }
 
 export async function getPosts(req, res) {
-    
+
     try {
         const {rows: posts} = await connection.query(`
             SELECT 
-<<<<<<< HEAD
                 p.*, u."userName" author, u."photoUrl"
-=======
-                p.id "postId", p.description, u."userName" author, u."photoUrl", p.link
->>>>>>> 1a74d46b7dcaf1f0e556545b847c0e064f420623
             FROM posts p
             LEFT JOIN users u on p."userId" = u.id 
             GROUP BY description, author, "photoUrl", p.id
