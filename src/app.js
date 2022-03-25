@@ -13,4 +13,4 @@ app.use(router);
 
 app.listen(process.env.PORT, () => {
     console.log(`rodando na porta ${process.env.PORT}`);
-});
+})
