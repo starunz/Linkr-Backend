@@ -11,6 +11,6 @@ app.use(json());
 
 app.use(router);
 
-app.listen(process.env.PORT, () => {
-    console.log(`rodando na porta ${process.env.PORT}`);
+app.listen('4000', () => {
+    console.log(`rodando na porta 4000`);
 });

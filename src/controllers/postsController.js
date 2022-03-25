@@ -39,7 +39,7 @@ export async function getPosts(req, res) {
             ORDER BY p.id DESC
             LIMIT 20
         `);
-
+       
         for (const post of posts) {
             const {image, title, description} = await urlMetadata(post.link);
 
