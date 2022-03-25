@@ -1,18 +1,27 @@
 import connection from '../db.js';
 import urlMetadata from 'url-metadata';
 import { insertHashtags } from './hashtagsController.js';
+import addSpaceHashtagsStuck from '../utilityFunctions.js';
 
 export async function publishPosts(req, res) {
     const {userId, link, description} = req.body;
 
-    const hashtags = description.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [];
+    const descriptionResolve = addSpaceHashtagsStuck(description);
 
+    const hashtags = (descriptionResolve.includes('#') ? (
+        descriptionResolve.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [] 
+    ) : []);
+
+    console.log(hashtags);
+    
     try {
+        const {image, description: descriptionLink, title} = await urlMetadata(link);
+
         await connection.query(`
             INSERT INTO posts
             ("userId", link, description)
             VALUES ($1, $2, $3);
-        `, [userId, link, description]);
+        `, [userId, link, descriptionResolve]);
 
         const {rows: postId} = await connection.query(`
             SELECT MAX(id) FROM posts
@@ -39,14 +48,6 @@ export async function getPosts(req, res) {
             ORDER BY p.id DESC
             LIMIT 20
         `);
-
-        for (const post of posts) {
-            const {image, title, description} = await urlMetadata(post.link);
-
-            post.linkImage = image;
-            post.linkTitle = title;
-            post.linkDescription = description;
-        }
         
         res.send(posts);
 
