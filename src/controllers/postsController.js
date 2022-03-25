@@ -43,7 +43,19 @@ export async function getPosts(req, res) {
             ORDER BY p.id DESC
             LIMIT 20
         `);
+<<<<<<< HEAD
         
+=======
+       /*
+        for (const post of posts) {
+            const {image, title, description} = await urlMetadata(post.link);
+
+            post.linkImage = image;
+            post.linkTitle = title;
+            post.linkDescription = description;
+        }
+        */
+>>>>>>> 14a854bc19721991bd4e2c9edb4b05fd4c06bf1d
         res.send(posts);
 
     } catch (error) {
