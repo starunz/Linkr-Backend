@@ -24,6 +24,7 @@ export default async function validateToken(req, res, next) {
             return res.sendStatus(401);
         }
         
+        res.locals.userId = session[0].userId;
         next();
     } catch (error) {
         console.log(error);
