@@ -110,7 +110,7 @@ export async function getLike(req, res) {
         `, [parseInt(postId)]) 
      
         if(likes.rows.length === 0 ) {
-            return res.send([{ postId: parseInt(postId), count: 0, isLiked: isLiked}])
+            return res.status(200).send([{ postId: parseInt(postId), count: 0, isLiked: isLiked}])
         }
 
         const userLike = await connection.query(`
@@ -125,7 +125,7 @@ export async function getLike(req, res) {
         }
 
         likes.rows[0].isLiked = isLiked;
-        res.send(likes.rows)
+        res.status(200).send(likes.rows)
 
     } catch (error) {
         res.sendStatus(500)
