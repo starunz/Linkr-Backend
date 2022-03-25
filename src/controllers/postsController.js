@@ -33,6 +33,7 @@ export async function publishPosts(req, res) {
 }
 
 export async function getPosts(req, res) {
+    
     try {
         const {rows: posts} = await connection.query(`
             SELECT 
