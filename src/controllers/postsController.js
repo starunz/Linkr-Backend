@@ -201,7 +201,6 @@ export async function deletePosts(req, res) {
     const {id} = req.params;
 
     try {
-
         await connection.query(`
             DELETE FROM posts WHERE id = $1;
         `, [id]);
@@ -210,8 +209,38 @@ export async function deletePosts(req, res) {
 
         console.log(error.message);
         res.sendStatus(500);
-        
     }
     
     res.sendStatus(200);
+}
+
+export async function updatePosts(req, res){
+    const {id: postId} = req.params;
+    const {description} = req.body;
+
+    const descriptionResolve = addSpaceHashtagsStuck(description);
+
+    const hashtags = (descriptionResolve.includes('#') ? (
+        descriptionResolve.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [] 
+    ) : []);
+
+    try {
+        await connection.query(`
+            DELETE FROM hashtagsposts WHERE "postId" = $1;
+        `, [postId]);
+
+        await connection.query(`
+            UPDATE posts
+            SET description = $1
+            WHERE id = $2
+        `, [descriptionResolve, postId]);
+    
+        await insertHashtags(hashtags, postId);
+
+        res.sendStatus(200);
+
+    } catch (error) {
+        console.log(error.message);
+        res.sendStatus(500);
+    }
 }

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getPosts, publishPosts, like, getLike, deletePosts } from "../controllers/postsController.js";
+import { getPosts, publishPosts, like, getLike, deletePosts, updatePosts } from "../controllers/postsController.js";
 import validateSchemaMiddleware from "../middlewares/validateSchemaMiddleware.js";
 import validateToken from "../middlewares/validateTokenMiddleware.js";
 import { postsSchemas } from "../schemas/postsSchema.js";
@@ -10,5 +10,6 @@ postsRouter.get('/posts', getPosts);
 postsRouter.post('/like', validateToken, like);
 postsRouter.get('/like/:postId',validateToken ,getLike);
 postsRouter.delete('/posts/:id', validateToken, deletePosts);
+postsRouter.put('/posts/:id', validateToken, updatePosts);
 
 export default postsRouter;
