@@ -12,6 +12,7 @@ export async function publishPosts(req, res) {
         descriptionResolve.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [] 
     ) : []);
 
+
     try {
         const {image, description: descriptionLink, title} = await urlMetadata(link);
 
@@ -128,4 +129,23 @@ export async function getLike(req, res) {
         res.sendStatus(500)
     }
 
+}
+
+export async function deletePosts(req, res) {
+    const {id} = req.params;
+
+    try {
+
+        await connection.query(`
+            DELETE FROM posts WHERE id = $1;
+        `, [id]);
+
+    } catch (error) {
+
+        console.log(error.message);
+        res.sendStatus(500);
+        
+    }
+    
+    res.sendStatus(200);
 }

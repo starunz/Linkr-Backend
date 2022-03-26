@@ -1,4 +1,4 @@
-CREATE DATABASE 'Linkr';
+CREATE DATABASE "Linkr";
 CREATE TABLE "users" (
     "id" SERIAL PRIMARY KEY,
     "userName" TEXT UNIQUE NOT NULL,
@@ -24,6 +24,7 @@ CREATE TABLE "likes" (
     "id" SERIAL PRIMARY KEY,
     "userId" INTEGER NOT NULL REFERENCES "users"("id"),
     "postId" INTEGER NOT NULL REFERENCES "posts"("id")
+    ON DELETE CASCADE
 );
 CREATE TABLE "hashtags" (
     "id" SERIAL PRIMARY KEY,
@@ -31,6 +32,8 @@ CREATE TABLE "hashtags" (
 );
 CREATE TABLE "hashtagsposts" (
     "id" SERIAL PRIMARY KEY,
-    "postId" INTEGER NOT NULL REFERENCES "posts"("id"),
+    "postId" INTEGER NOT NULL REFERENCES "posts"("id")
+    ON DELETE CASCADE,
     "hashtagId" INTEGER NOT NULL REFERENCES "hashtags"("id")
+    ON DELETE CASCADE
 );
