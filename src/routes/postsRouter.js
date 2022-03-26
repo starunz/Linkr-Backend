@@ -12,4 +12,5 @@ postsRouter.get('/like/:postId',validateToken ,getLike);
 postsRouter.delete('/posts/:id', validateToken, deletePosts);
 postsRouter.put('/posts/:id', validateToken, updatePosts);
 
+
 export default postsRouter;

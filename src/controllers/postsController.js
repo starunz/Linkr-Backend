@@ -204,14 +204,14 @@ export async function deletePosts(req, res) {
         await connection.query(`
             DELETE FROM posts WHERE id = $1;
         `, [id]);
+      
+          res.sendStatus(200);
 
     } catch (error) {
 
         console.log(error.message);
         res.sendStatus(500);
     }
-    
-    res.sendStatus(200);
 }
 
 export async function updatePosts(req, res){
