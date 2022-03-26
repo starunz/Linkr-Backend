@@ -43,3 +43,19 @@ export async function getUserDataById(req, res){
 
   res.send(user[0]);
 }
+
+export async function getUsers(req, res){
+  try{
+    const {like} = req.query;
+
+    const {rows: users} = await connection.query(`
+        SELECT id, "userName", "photoUrl" FROM users WHERE LOWER("userName") LIKE $1
+    `, [`%${like}%`]);
+    
+    return res.status(200).send(users);
+  }
+  catch(error)
+  {
+    return res.status(500).send(error.message);
+  }
+}

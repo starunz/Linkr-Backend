@@ -1,24 +1,29 @@
 import connection from '../db.js';
 import urlMetadata from 'url-metadata';
 import { insertHashtags } from './hashtagsController.js';
+import addSpaceHashtagsStuck from '../utilityFunctions.js';
 
 export async function publishPosts(req, res) {
     const {userId, link, description} = req.body;
 
-    const hashtags = description.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [];
+    const descriptionResolve = addSpaceHashtagsStuck(description);
+
+    const hashtags = (descriptionResolve.includes('#') ? (
+        descriptionResolve.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [] 
+    ) : []);
+
 
     try {
-        await connection.query(`
-            INSERT INTO posts
-            ("userId", link, description)
-            VALUES ($1, $2, $3);
-        `, [userId, link, description]);
+        const {image, description: descriptionLink, title} = await urlMetadata(link);
 
         const {rows: postId} = await connection.query(`
-            SELECT MAX(id) FROM posts
-        `); 
+            INSERT INTO posts
+            ("userId", link, description, "descriptionLinK", "imageLink", "titleLink")
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+        `, [userId, link, descriptionResolve, descriptionLink, image, title]);
 
-        await insertHashtags(hashtags, postId[0].max);
+        await insertHashtags(hashtags, postId[0].id);
 
         res.sendStatus(201);
 
@@ -29,25 +34,18 @@ export async function publishPosts(req, res) {
 }
 
 export async function getPosts(req, res) {
+
     try {
         const {rows: posts} = await connection.query(`
             SELECT 
-                p.id "postId", p.description, u."userName" author, u."photoUrl", p.link
+                p.*, u."userName" author, u."photoUrl"
             FROM posts p
             LEFT JOIN users u on p."userId" = u.id 
             GROUP BY description, author, "photoUrl", p.id
             ORDER BY p.id DESC
             LIMIT 20
         `);
-       /*
-        for (const post of posts) {
-            const {image, title, description} = await urlMetadata(post.link);
-
-            post.linkImage = image;
-            post.linkTitle = title;
-            post.linkDescription = description;
-        }
-        */
+        
         res.send(posts);
 
     } catch (error) {
@@ -106,29 +104,143 @@ export async function getLike(req, res) {
                 likes."postId", COUNT("userId") 
             FROM likes 
             WHERE likes."postId" = $1
-            GROUP BY likes."postId";
+            GROUP BY likes."postId"
         `, [parseInt(postId)]) 
-     
-        if(likes.rows.length === 0 ) {
-            return res.status(200).send([{ postId: parseInt(postId), count: 0, isLiked: isLiked}])
-        }
 
         const userLike = await connection.query(`
             SELECT * 
             FROM likes
             WHERE likes."postId" = $1
             AND likes."userId" = $2
-        `, [parseInt(postId), userId])
+        `, [parseInt(postId), userId]) 
 
-        if (userLike.rows.length !== 0) {
-            isLiked = true;
+        const whoLiked = await connection.query(`
+            SELECT 
+            users."userName", users.id  
+            FROM likes 
+            JOIN users on users.id = likes."userId" 
+            WHERE likes."postId" = $1 
+        `, [parseInt(postId)]); 
+
+        if(likes.rows.length === 0 ) { 
+            return res.send([{ 
+                postId: parseInt(postId), 
+                count: 0, 
+                isLiked: isLiked, 
+                whoLiked: `Seja o primeiro <br/> a curtir!`}])
         }
 
-        likes.rows[0].isLiked = isLiked;
-        res.status(200).send(likes.rows)
+        if (whoLiked.rows.length === 1) { 
+            if (userLike.rows.length !== 0) { 
+                isLiked = true;
+                likes.rows[0].isLiked = isLiked;
+                likes.rows[0].whoLiked = 'Você';
+
+                return res.send(likes.rows)
+            } else {
+                likes.rows[0].isLiked = isLiked;
+                likes.rows[0].whoLiked = `${whoLiked.rows[0].userName}`;
+
+                return res.send(likes.rows)
+            }
+        }
+
+        if (whoLiked.rows.length === 2) { 
+            if (userLike.rows.length !== 0) { 
+                isLiked = true;
+                likes.rows[0].isLiked = isLiked;
+
+                let other;
+                if(whoLiked.rows[0].id === userId) {
+                    other = whoLiked.rows[1].userName;
+                } else {
+                    other = whoLiked.rows[0].userName;
+                }
+            
+                likes.rows[0].whoLiked = `Você e ${other}`;
+
+                return res.send(likes.rows)
+            } else { 
+                likes.rows[0].isLiked = isLiked;
+                likes.rows[0].whoLiked = `${whoLiked.rows[0].userName} e ${whoLiked.rows[1].userName}`;
+
+                return res.send(likes.rows)
+            }
+        }
+
+        if (whoLiked.rows.length > 2) { 
+            if (userLike.rows.length !== 0) { 
+                isLiked = true;
+                likes.rows[0].isLiked = isLiked;
+                
+                let other;
+                if (whoLiked.rows[0].id === userId) {
+                    other = whoLiked.rows[1].userName;
+                } else {
+                    other = whoLiked.rows[0].userName;
+                }
+
+                likes.rows[0].whoLiked = `Você, ${other} e outras ${parseInt(likes.rows[0].count) - 2} pessoas`;
+
+                return res.send(likes.rows)
+            } else { 
+                likes.rows[0].isLiked = isLiked;
+                likes.rows[0].whoLiked = `${whoLiked.rows[0].userName}, ${whoLiked.rows[1].userName} e outras ${parseInt(likes.rows[0].count) - 2} pessoas`;
+
+                return res.send(likes.rows)
+            }
+        }
 
     } catch (error) {
         res.sendStatus(500)
     }
 
+}
+
+export async function deletePosts(req, res) {
+    const {id} = req.params;
+
+    try {
+        await connection.query(`
+            DELETE FROM posts WHERE id = $1;
+        `, [id]);
+      
+          res.sendStatus(200);
+
+    } catch (error) {
+
+        console.log(error.message);
+        res.sendStatus(500);
+    }
+}
+
+export async function updatePosts(req, res){
+    const {id: postId} = req.params;
+    const {description} = req.body;
+
+    const descriptionResolve = addSpaceHashtagsStuck(description);
+
+    const hashtags = (descriptionResolve.includes('#') ? (
+        descriptionResolve.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [] 
+    ) : []);
+
+    try {
+        await connection.query(`
+            DELETE FROM hashtagsposts WHERE "postId" = $1;
+        `, [postId]);
+
+        await connection.query(`
+            UPDATE posts
+            SET description = $1
+            WHERE id = $2
+        `, [descriptionResolve, postId]);
+    
+        await insertHashtags(hashtags, postId);
+
+        res.sendStatus(200);
+
+    } catch (error) {
+        console.log(error.message);
+        res.sendStatus(500);
+    }
 }
