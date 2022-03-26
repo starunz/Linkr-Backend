@@ -103,26 +103,92 @@ export async function getLike(req, res) {
                 likes."postId", COUNT("userId") 
             FROM likes 
             WHERE likes."postId" = $1
-            GROUP BY likes."postId";
+            GROUP BY likes."postId"
         `, [parseInt(postId)]) 
-     
-        if(likes.rows.length === 0 ) {
-            return res.status(200).send([{ postId: parseInt(postId), count: 0, isLiked: isLiked}])
-        }
 
         const userLike = await connection.query(`
             SELECT * 
             FROM likes
             WHERE likes."postId" = $1
             AND likes."userId" = $2
-        `, [parseInt(postId), userId])
+        `, [parseInt(postId), userId]) 
 
-        if (userLike.rows.length !== 0) {
-            isLiked = true;
+        const whoLiked = await connection.query(`
+            SELECT 
+            users."userName", users.id  
+            FROM likes 
+            JOIN users on users.id = likes."userId" 
+            WHERE likes."postId" = $1 
+        `, [parseInt(postId)]); 
+
+        if(likes.rows.length === 0 ) { 
+            return res.send([{ 
+                postId: parseInt(postId), 
+                count: 0, 
+                isLiked: isLiked, 
+                whoLiked: `Seja o primeiro <br/> a curtir!`}])
         }
 
-        likes.rows[0].isLiked = isLiked;
-        res.status(200).send(likes.rows)
+        if (whoLiked.rows.length === 1) { 
+            if (userLike.rows.length !== 0) { 
+                isLiked = true;
+                likes.rows[0].isLiked = isLiked;
+                likes.rows[0].whoLiked = 'Você';
+
+                return res.send(likes.rows)
+            } else {
+                likes.rows[0].isLiked = isLiked;
+                likes.rows[0].whoLiked = `${whoLiked.rows[0].userName}`;
+
+                return res.send(likes.rows)
+            }
+        }
+
+        if (whoLiked.rows.length === 2) { 
+            if (userLike.rows.length !== 0) { 
+                isLiked = true;
+                likes.rows[0].isLiked = isLiked;
+
+                let other;
+                if(whoLiked.rows[0].id === userId) {
+                    other = whoLiked.rows[1].userName;
+                } else {
+                    other = whoLiked.rows[0].userName;
+                }
+            
+                likes.rows[0].whoLiked = `Você e ${other}`;
+
+                return res.send(likes.rows)
+            } else { 
+                likes.rows[0].isLiked = isLiked;
+                likes.rows[0].whoLiked = `${whoLiked.rows[0].userName} e ${whoLiked.rows[1].userName}`;
+
+                return res.send(likes.rows)
+            }
+        }
+
+        if (whoLiked.rows.length > 2) { 
+            if (userLike.rows.length !== 0) { 
+                isLiked = true;
+                likes.rows[0].isLiked = isLiked;
+                
+                let other;
+                if (whoLiked.rows[0].id === userId) {
+                    other = whoLiked.rows[1].userName;
+                } else {
+                    other = whoLiked.rows[0].userName;
+                }
+
+                likes.rows[0].whoLiked = `Você, ${other} e outras ${parseInt(likes.rows[0].count) - 2} pessoas`;
+
+                return res.send(likes.rows)
+            } else { 
+                likes.rows[0].isLiked = isLiked;
+                likes.rows[0].whoLiked = `${whoLiked.rows[0].userName}, ${whoLiked.rows[1].userName} e outras ${parseInt(likes.rows[0].count) - 2} pessoas`;
+
+                return res.send(likes.rows)
+            }
+        }
 
     } catch (error) {
         res.sendStatus(500)
