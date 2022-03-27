@@ -59,3 +59,20 @@ export async function getUsers(req, res){
     return res.status(500).send(error.message);
   }
 }
+
+export async function getUserPosts(req, res){
+  const { id } = req.params;
+  
+  try {
+    const userPosts = await connection.query(`
+      SELECT posts.*, users."photoUrl", users."userName" author
+      FROM posts
+      JOIN users ON users.id = posts."userId" 
+      WHERE "userId" = $1;
+    `, [id]);
+
+    res.send(userPosts.rows)
+  } catch (error) {
+    res.sendStatus(500)
+  }
+}
