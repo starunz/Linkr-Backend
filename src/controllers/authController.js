@@ -11,7 +11,7 @@ export async function login(req, res) {
   );
 
   if (user.length === 0) {
-    return res.sendStatus(401);
+    return res.sendStatus(204);
   }
 
   if (!bcrypt.compareSync(password, user[0].password)) {
