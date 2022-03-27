@@ -64,6 +64,12 @@ export async function getUserPosts(req, res){
   const { id } = req.params;
   
   try {
+    const user = await connection.query(`
+      SELECT users."userName", users."photoUrl"
+      FROM users
+      WHERE users.id = $1;
+    `, [id]);
+
     const userPosts = await connection.query(`
       SELECT posts.*, users."photoUrl", users."userName" author
       FROM posts
@@ -71,7 +77,8 @@ export async function getUserPosts(req, res){
       WHERE "userId" = $1;
     `, [id]);
 
-    res.send(userPosts.rows)
+    const response = { posts: userPosts.rows, user: user.rows }
+    res.send(response)
   } catch (error) {
     res.sendStatus(500)
   }
