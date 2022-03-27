@@ -10,7 +10,7 @@ export async function login(req, res) {
     [email]
   );
 
-  if (!user) {
+  if (user.length === 0) {
     return res.sendStatus(401);
   }
 
