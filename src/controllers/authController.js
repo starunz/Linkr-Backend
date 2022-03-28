@@ -11,7 +11,7 @@ export async function login(req, res) {
   );
 
   if (user.length === 0) {
-    return res.sendStatus(401);
+    return res.sendStatus(204);
   }
 
   if (!bcrypt.compareSync(password, user[0].password)) {
@@ -23,5 +23,6 @@ export async function login(req, res) {
     'INSERT INTO sessions (token, "userId") VALUES ($1, $2)',
     [token, user[0].id]
   );
+  
   return res.send({token: token, id: user[0].id});
 }
