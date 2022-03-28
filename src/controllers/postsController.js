@@ -9,8 +9,10 @@ export async function publishPosts(req, res) {
     const descriptionResolve = addSpaceHashtagsStuck(description);
 
     const hashtags = (descriptionResolve.includes('#') ? (
-        descriptionResolve.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [] 
+        descriptionResolve.match(/#[^\s#\.\;]*/gmi).map(x => x.substr(1).toLowerCase()) || [] 
     ) : []);
+
+    console.log(hashtags);
 
 
     try {
