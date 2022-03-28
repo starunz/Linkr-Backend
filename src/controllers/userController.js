@@ -48,7 +48,7 @@ export async function getUsers(req, res){
     const {like} = req.query;
 
     const {rows: users} = await connection.query(`
-        SELECT id, "userName", "photoUrl" FROM users WHERE LOWER("userName") LIKE $1
+        SELECT id, "userName", "photoUrl" FROM users WHERE"userName" LIKE $1
     `, [`%${like}%`]);
     
     return res.status(200).send(users);

@@ -35,8 +35,26 @@ export async function publishPosts(req, res) {
 
 export async function getPosts(req, res) {
 
+    const {hashtag} = req.query;
+    let posts = null;
+    let result = null;
     try {
-        const {rows: posts} = await connection.query(`
+        if(hashtag)
+        {
+            result = await connection.query(`
+            SELECT 
+                p.*, u."userName" author, u."photoUrl"
+            FROM posts p
+            LEFT JOIN users u on p."userId" = u.id 
+            WHERE description LIKE $1
+            GROUP BY description, author, "photoUrl", p.id
+            ORDER BY p.id DESC
+            LIMIT 20
+        `,[`%${hashtag}%`]);
+        }
+        else
+        {
+        result = await connection.query(`
             SELECT 
                 p.*, u."userName" author, u."photoUrl"
             FROM posts p
@@ -45,7 +63,8 @@ export async function getPosts(req, res) {
             ORDER BY p.id DESC
             LIMIT 20
         `);
-        
+        }
+        posts = result.rows;
         res.send(posts);
 
     } catch (error) {
