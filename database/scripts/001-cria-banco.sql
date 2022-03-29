@@ -18,7 +18,8 @@ CREATE TABLE "posts" (
     "userId" INTEGER NOT NULL REFERENCES "users"("id"),
     "imageLink" TEXT,
     "titleLink" TEXT,
-    "descriptionLinK" TEXT
+    "descriptionLinK" TEXT,
+    "createDate" TIMESTAMP DEFAULT NOW()
 );
 CREATE TABLE "likes" (
     "id" SERIAL PRIMARY KEY,
@@ -36,4 +37,17 @@ CREATE TABLE "hashtagsposts" (
     ON DELETE CASCADE,
     "hashtagId" INTEGER NOT NULL REFERENCES "hashtags"("id")
     ON DELETE CASCADE
+);
+CREATE TABLE "follows" (
+    "id" SERIAL PRIMARY KEY,
+    "follower" INTEGER NOT NULL REFERENCES "users"("id"),
+    "following" INTEGER NOT NULL REFERENCES "users"("id")
+);
+CREATE TABLE "reposts" (
+    "id" SERIAL PRIMARY KEY,
+    "userId" INTEGER NOT NULL REFERENCES "users"("id"),
+    "userPosted" INTEGER NOT NULL REFERENCES "users"("id"),
+    "postId" INTEGER NOT NULL REFERENCES "posts"("id")
+    ON DELETE CASCADE,
+    "createDate" TIMESTAMP DEFAULT NOW()
 );

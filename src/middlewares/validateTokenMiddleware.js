@@ -3,6 +3,7 @@ import connection from "../db.js";
 
 export default async function validateToken(req, res, next) {
 
+
     try {
         const { authorization } = req.headers;
         const token = authorization?.replace('Bearer ', '');
@@ -25,6 +26,7 @@ export default async function validateToken(req, res, next) {
         }
         
         res.locals.userId = session[0].userId;
+        res.locals.token = token;
         next();
     } catch (error) {
         console.log(error);
