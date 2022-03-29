@@ -1,7 +1,7 @@
-import connection from '../db.js';
 import urlMetadata from 'url-metadata';
 import { insertHashtags } from './hashtagsController.js';
 import addSpaceHashtagsStuck from '../utilityFunctions.js';
+import { postsRepository } from '../repositories/postsRepository.js';
 
 export async function publishPosts(req, res) {
     const {userId, link, description} = req.body;
@@ -12,18 +12,10 @@ export async function publishPosts(req, res) {
         descriptionResolve.match(/#[^\s#\.\;]*/gmi).map(x => x.substr(1).toLowerCase()) || [] 
     ) : []);
 
-    console.log(hashtags);
-
-
     try {
         const {image, description: descriptionLink, title} = await urlMetadata(link);
 
-        const {rows: postId} = await connection.query(`
-            INSERT INTO posts
-            ("userId", link, description, "descriptionLinK", "imageLink", "titleLink")
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id
-        `, [userId, link, descriptionResolve, descriptionLink, image, title]);
+        const { rows: postId } = await postsRepository.publishPosts(userId, link, descriptionResolve, descriptionLink, image, title);
 
         await insertHashtags(hashtags, postId[0].id);
 
@@ -38,15 +30,7 @@ export async function publishPosts(req, res) {
 export async function getPosts(req, res) {
 
     try {
-        const {rows: posts} = await connection.query(`
-            SELECT 
-                p.*, u."userName" author, u."photoUrl"
-            FROM posts p
-            LEFT JOIN users u on p."userId" = u.id 
-            GROUP BY description, author, "photoUrl", p.id
-            ORDER BY p.id DESC
-            LIMIT 20
-        `);
+        const {rows: posts} = await postsRepository.getPosts();
         
         res.send(posts);
 
@@ -62,30 +46,16 @@ export async function like(req, res) {
     const postId = req.body.postId;
 
     try {
-        const isLiked = await connection.query(`
-            SELECT * 
-            FROM likes 
-            WHERE likes."postId" = $1
-            AND likes."userId" = $2
-        `, [postId, userId])
+        const isLiked = await postsRepository.isLiked(postId, userId);
         
         if(isLiked.rows.length === 0) {
             
-            await connection.query(`
-                INSERT INTO 
-                    likes ("userId", "postId") 
-                VALUES ($1, $2)
-            `, [userId, postId])
+            await postsRepository.insertLike(userId, postId);
 
             return res.sendStatus(201)
         }
 
-        await connection.query(`
-            DELETE FROM likes
-                WHERE "userId" = $1
-                AND "postId" = $2
-        
-        `, [userId, postId])
+        await postsRepository.deleteLike(userId, postId);
 
         res.sendStatus(201)
             
@@ -101,28 +71,11 @@ export async function getLike(req, res) {
 
     try {
         
-        const likes = await connection.query(`
-            SELECT 
-                likes."postId", COUNT("userId") 
-            FROM likes 
-            WHERE likes."postId" = $1
-            GROUP BY likes."postId"
-        `, [parseInt(postId)]) 
+        const likes = await postsRepository.selectLikes(postId);
 
-        const userLike = await connection.query(`
-            SELECT * 
-            FROM likes
-            WHERE likes."postId" = $1
-            AND likes."userId" = $2
-        `, [parseInt(postId), userId]) 
+        const userLike = await postsRepository.userLikes(postId, userId);
 
-        const whoLiked = await connection.query(`
-            SELECT 
-            users."userName", users.id  
-            FROM likes 
-            JOIN users on users.id = likes."userId" 
-            WHERE likes."postId" = $1 
-        `, [parseInt(postId)]); 
+        const whoLiked = await postsRepository.whoLiked(postId);
 
         if(likes.rows.length === 0 ) { 
             return res.send([{ 
@@ -203,11 +156,9 @@ export async function deletePosts(req, res) {
     const {id} = req.params;
 
     try {
-        await connection.query(`
-            DELETE FROM posts WHERE id = $1;
-        `, [id]);
+        await postsRepository.deletePosts(id);
       
-          res.sendStatus(200);
+        res.sendStatus(200);
 
     } catch (error) {
 
@@ -227,15 +178,9 @@ export async function updatePosts(req, res){
     ) : []);
 
     try {
-        await connection.query(`
-            DELETE FROM hashtagsposts WHERE "postId" = $1;
-        `, [postId]);
+        await postsRepository.deleteHashtagsByPostId(postId);
 
-        await connection.query(`
-            UPDATE posts
-            SET description = $1
-            WHERE id = $2
-        `, [descriptionResolve, postId]);
+        await postsRepository.updatePosts(descriptionResolve, postId);
     
         await insertHashtags(hashtags, postId);
 

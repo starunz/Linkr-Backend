@@ -1,47 +1,30 @@
-import connection from '../db.js';
+import { hashtagsRepository } from '../repositories/hashtagsRepository.js';
 
 export async function insertHashtags(hashtags, postId){
     for (const hashtag of hashtags) {
         
         let hashtagId;
         try {
-            hashtagId = await connection.query(`
-                INSERT INTO hashtags 
-                (name) 
-                VALUES ($1)
-                RETURNING id
-            `, [hashtag]);
+            hashtagId = await hashtagsRepository.insertHashtags(hashtag);
             hashtagId = hashtagId.rows[0].id;
 
         } catch (error) {
             if(error.message === 'duplicate key value violates unique constraint "hashtags_name_key"'){
 
-                hashtagId = await connection.query(`
-                    SELECT id FROM hashtags WHERE name = $1
-                `, [hashtag]);
+                hashtagId = await hashtagsRepository.selectHashtags(hashtag);
                 hashtagId = hashtagId.rows[0].id;
 
             }else {return error.message}
         }
 
-        await connection.query(`
-            INSERT INTO hashtagsposts
-            ("postId", "hashtagId")
-            VALUES ($1, $2)
-        `, [postId, hashtagId]);
+        await hashtagsRepository.insertHashtagsPosts(postId, hashtagId);
     }
 }
 
 export async function getTrendingHashtags(req, res){
     try {
-        const {rows: hashtags} = await connection.query(`
-        SELECT hash.name, COUNT(hp.*)  
-        FROM hashtagsPosts hp
-        INNER JOIN hashtags hash on hash.id = hp."hashtagId"
-        GROUP BY hash.name
-        ORDER BY COUNT DESC, hash.name
-        LIMIT 9;
-        `);
+        const {rows: hashtags} = await hashtagsRepository.getTrendingHashtags();
+        
         res.status(200).send(hashtags);
     } catch (error) {
         return error.message;
