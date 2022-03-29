@@ -10,6 +10,19 @@ async function publishPosts(userId, link, descriptionResolve, descriptionLink, i
 
 }
 
+async function getPostByHashtag(hashtag){
+    return connection.query(`
+            SELECT 
+                p.*, u."userName" author, u."photoUrl"
+            FROM posts p
+            LEFT JOIN users u on p."userId" = u.id 
+            WHERE description LIKE $1
+            GROUP BY description, author, "photoUrl", p.id
+            ORDER BY p.id DESC
+            LIMIT 20
+        `, [`%${hashtag}%`]);
+}
+
 async function getPosts() {
     return connection.query(`
             SELECT 
@@ -98,6 +111,7 @@ async function updatePosts(descriptionResolve, postId){
 
 export const postsRepository = {
     publishPosts,
+    getPostByHashtag,
     getPosts,
     isLiked,
     insertLike,

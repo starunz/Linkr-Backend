@@ -29,9 +29,20 @@ export async function publishPosts(req, res) {
 
 export async function getPosts(req, res) {
 
+    const {hashtag} = req.query;
+    let posts = null;
+    let result = null;
     try {
-        const {rows: posts} = await postsRepository.getPosts();
-        
+        if(hashtag)
+        {
+            result = await postsRepository.getPostByHashtag(hashtag);
+        }
+        else
+        {
+            result = await postsRepository.getPosts();
+        }
+
+        posts = result.rows;
         res.send(posts);
 
     } catch (error) {
