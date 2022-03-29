@@ -2,6 +2,7 @@ import urlMetadata from 'url-metadata';
 import { insertHashtags } from './hashtagsController.js';
 import addSpaceHashtagsStuck from '../utilityFunctions.js';
 import { postsRepository } from '../repositories/postsRepository.js';
+import { getIdUserByToken, selectFollowingsUsers } from '../repositories/followsRepository.js';
 
 export async function publishPosts(req, res) {
     const {userId, link, description} = req.body;
@@ -29,10 +30,18 @@ export async function publishPosts(req, res) {
 
 export async function getPosts(req, res) {
 
+    const { token } = res.locals;
     const {hashtag} = req.query;
     let posts = null;
     let result = null;
+
     try {
+        let idUser = await getIdUserByToken(token); 
+        idUser = idUser.rows[0].userId; 
+        let followings = await selectFollowingsUsers(idUser);
+
+        followings = followings.rows.map(following => following.following);
+
         if(hashtag)
         {
             result = await postsRepository.getPostByHashtag(hashtag);
@@ -41,8 +50,7 @@ export async function getPosts(req, res) {
         {
             result = await postsRepository.getPosts();
         }
-
-        posts = result.rows;
+        const posts = result.rows.filter(post => followings.includes(post.userId) || post.userId === idUser);
         res.send(posts);
 
     } catch (error) {
