@@ -109,6 +109,22 @@ async function updatePosts(descriptionResolve, postId){
         `, [descriptionResolve, postId]);
 }
 
+async function insertRepost(userId, postId, userPosted){
+    return connection.query(`
+        INSERT INTO
+        reposts ("userId", "postId", "userPosted")
+        VALUES ($1, $2, $3)
+    `, [userId, postId, userPosted])
+}
+
+async function getReposts(postId){
+    return connection.query(`
+        SELECT COUNT("userId")
+        FROM reposts
+        WHERE "postId" = $1
+    `, [postId])
+}
+
 export const postsRepository = {
     publishPosts,
     getPostByHashtag,
@@ -121,5 +137,7 @@ export const postsRepository = {
     whoLiked,
     deletePosts,
     deleteHashtagsByPostId,
-    updatePosts
+    updatePosts,
+    insertRepost,
+    getReposts
 }

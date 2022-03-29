@@ -22,7 +22,6 @@ export async function publishPosts(req, res) {
         res.sendStatus(201);
 
     } catch (error) {
-        console.log(error.message);
         res.sendStatus(500);
     }
 }
@@ -46,7 +45,6 @@ export async function getPosts(req, res) {
         res.send(posts);
 
     } catch (error) {
-        console.log(error.message);
         res.sendStatus(500);
     }
 
@@ -172,8 +170,6 @@ export async function deletePosts(req, res) {
         res.sendStatus(200);
 
     } catch (error) {
-
-        console.log(error.message);
         res.sendStatus(500);
     }
 }
@@ -198,7 +194,30 @@ export async function updatePosts(req, res){
         res.sendStatus(200);
 
     } catch (error) {
-        console.log(error.message);
+        res.sendStatus(500);
+    }
+}
+
+export async function repost(req, res){
+    const { userId, postId, userPosted } = req.body;
+
+    try {
+        await postsRepository.insertRepost(userId, postId, userPosted);
+
+        res.sendStatus(201);
+    } catch (error) {
+        res.sendStatus(500);
+    }
+}
+
+export async function getReposts(req, res){
+    const { postId } = req.params;
+
+    try {
+        const promise = await postsRepository.getReposts(postId);
+    
+        res.send(promise.rows)
+    } catch (error) {
         res.sendStatus(500);
     }
 }
