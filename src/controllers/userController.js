@@ -1,11 +1,11 @@
 import bcrypt from 'bcrypt';
-import connection from '../db.js';
+import { userRepository } from '../repositories/userRepository.js';
 
 export async function createUser(req, res) {
   const user = req.body;
 
   try {
-    const existingUsers = await connection.query('SELECT * FROM users WHERE email=$1', [user.email])
+    const existingUsers = await userRepository.selectUser(user.email);
     
     if (existingUsers.rowCount > 0) {
       return res.sendStatus(409);
@@ -13,11 +13,7 @@ export async function createUser(req, res) {
 
     const passwordHash = bcrypt.hashSync(user.password, 10);
 
-    await connection.query(`
-      INSERT INTO 
-        users(email, password, "userName", "photoUrl") 
-      VALUES ($1, $2, $3, $4)
-    `, [ user.email, passwordHash, user.username, user.photoUrl ])
+    await userRepository.createUser(user, passwordHash);
 
     res.sendStatus(201);
 
@@ -32,9 +28,8 @@ export async function getUserDataById(req, res){
 
   const {id} = req.params;
 
-  const {rows: user} = await connection.query(`
-      SELECT * FROM users WHERE $1 = users.id
-  `, [id]);
+  const {rows: user} = await userRepository.getUserDataById(id);
+
   if (user.length === 0) {
       return res.sendStatus(422);
   }
@@ -48,9 +43,7 @@ export async function getUsers(req, res){
   try{
     const {like} = req.query;
 
-    const {rows: users} = await connection.query(`
-        SELECT id, "userName", "photoUrl" FROM users WHERE"userName" LIKE $1
-    `, [`%${like}%`]);
+    const {rows: users} = await userRepository.getUsers(like);
     
     return res.status(200).send(users);
   }
@@ -64,20 +57,10 @@ export async function getUserPosts(req, res){
   const { id } = req.params;
   
   try {
-    const user = await connection.query(`
-      SELECT users."userName", users."photoUrl"
-      FROM users
-      WHERE users.id = $1;
-    `, [id]);
+    const { user, userPosts } = await userRepository.getUserPosts(id);
 
-    const userPosts = await connection.query(`
-      SELECT posts.*, users."photoUrl", users."userName" author
-      FROM posts
-      JOIN users ON users.id = posts."userId" 
-      WHERE "userId" = $1;
-    `, [id]);
-
-    const response = { posts: userPosts.rows, user: user.rows }
+    const response = { posts: userPosts.rows, user: user.rows };
+    
     res.send(response)
   } catch (error) {
     res.sendStatus(500)

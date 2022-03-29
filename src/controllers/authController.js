@@ -1,14 +1,11 @@
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
-import connection from "../db.js";
+import { authRepository } from "../repositories/authRepository.js";
 
 export async function login(req, res) {
   const { email, password } = req.body;
 
-  const { rows: user } = await connection.query(
-    "SELECT * FROM users WHERE email=$1",
-    [email]
-  );
+  const { rows: user } = await authRepository.verifyUser(email);
 
   if (user.length === 0) {
     return res.sendStatus(204);
@@ -19,10 +16,7 @@ export async function login(req, res) {
   }
   
   const token = uuid();
-  await connection.query(
-    'INSERT INTO sessions (token, "userId") VALUES ($1, $2)',
-    [token, user[0].id]
-  );
+  await authRepository.createSession(token, user[0].id);
   
   return res.send({token: token, id: user[0].id});
 }
