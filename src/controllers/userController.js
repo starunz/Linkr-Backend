@@ -41,11 +41,13 @@ export async function getUserDataById(req, res){
 
 export async function getUsers(req, res){
   try{
-    const {like} = req.query;
-
-    const {rows: users} = await userRepository.getUsers(like);
+    const {username} = req.query;
     
-    return res.status(200).send(users);
+    const {userId} = req.query;
+    
+    const searchData = await userRepository.getUsers(userId, username);
+    
+    return res.status(200).send(searchData);
   }
   catch(error)
   {

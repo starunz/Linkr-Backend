@@ -1,4 +1,5 @@
-import connection from "../db.js";
+import { authRepository } from "../repositories/authRepository.js";
+import { userRepository } from "../repositories/userRepository.js";
 
 
 export default async function validateToken(req, res, next) {
@@ -10,16 +11,12 @@ export default async function validateToken(req, res, next) {
             return res.sendStatus(401);
         }
 
-        const {rows: session} = await connection.query(`
-        SELECT * FROM sessions WHERE token = $1
-        `, [token]);
+        const {rows: session} = await authRepository.selectSessionByToken(token);
         if (session.length === 0) {
             return res.sendStatus(401);
         }
 
-        const {rows: user} = await connection.query(`
-            SELECT * FROM users WHERE $1 = users.id
-        `, [session[0].userId]);
+        const {rows: user} = await userRepository.getUserDataById(session[0].userId);
         if (user.length === 0) {
             return res.sendStatus(401);
         }

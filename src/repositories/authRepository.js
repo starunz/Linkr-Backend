@@ -14,7 +14,14 @@ async function createSession(token, userId) {
     );
 }
 
+async function selectSessionByToken(token) {
+    return connection.query(`
+        SELECT * FROM sessions WHERE token = $1
+    `, [token]);
+}
+
 export const authRepository = {
     verifyUser,
-    createSession
+    createSession,
+    selectSessionByToken,
 }

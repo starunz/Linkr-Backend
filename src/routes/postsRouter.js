@@ -6,7 +6,7 @@ import { postsSchemas } from "../schemas/postsSchema.js";
 
 const postsRouter = Router();
 postsRouter.post('/posts', validateSchemaMiddleware(postsSchemas), publishPosts);
-postsRouter.get('/posts', getPosts);
+postsRouter.get('/posts', validateToken, getPosts);
 postsRouter.post('/like', validateToken, like);
 postsRouter.get('/like/:postId',validateToken ,getLike);
 postsRouter.delete('/posts/:id', validateToken, deletePosts);
