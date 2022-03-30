@@ -59,9 +59,11 @@ export async function getUserPosts(req, res){
   const { id } = req.params;
   
   try {
-    const { user, userPosts } = await userRepository.getUserPosts(id);
+    const { user, userPosts, userReposts } = await userRepository.getUserPosts(id);
 
-    const response = { posts: userPosts.rows, user: user.rows };
+    const totalPosts = [...userPosts.rows, ...userReposts.rows]
+    
+    const response = { posts: totalPosts, user: user.rows };
     
     res.send(response)
   } catch (error) {
