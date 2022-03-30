@@ -48,10 +48,20 @@ export async function getPosts(req, res) {
             result = await postsRepository.getPosts();
             resultReposts = await postsRepository.getAllReposts();
         }
-        const totalPosts = [...result.rows, ...resultReposts.rows]
+        const totalPosts = [...result.rows, ...resultReposts.rows];
+
+        const orderedPosts = totalPosts.sort(function (a, b) {
+            if (a.createDate < b.createDate) {
+                return 1;
+            }
+            if (a.createDate > b.createDate) {
+                return -1;
+            }
+            return 0;
+        });
         
         if(result.rows.length === 0) return res.send([]);
-        const posts = totalPosts.filter(post => !post.userRepostId ? followings.includes(post.userId) || post.userId === userId : followings.includes(post.userRepostId) || post.userRepostId === userId);
+        const posts = orderedPosts.filter(post => !post.userRepostId ? followings.includes(post.userId) || post.userId === userId : followings.includes(post.userRepostId) || post.userRepostId === userId);
         res.send(posts);
 
     } catch (error) {

@@ -61,9 +61,19 @@ export async function getUserPosts(req, res){
   try {
     const { user, userPosts, userReposts } = await userRepository.getUserPosts(id);
 
-    const totalPosts = [...userPosts.rows, ...userReposts.rows]
+    const totalPosts = [...userPosts.rows, ...userReposts.rows];
+
+    const orderedPosts = totalPosts.sort(function (a, b) {
+      if (a.createDate < b.createDate) {
+        return 1;
+      }
+      if (a.createDate > b.createDate) {
+        return -1;
+      }
+      return 0;
+    });
     
-    const response = { posts: totalPosts, user: user.rows };
+    const response = { posts: orderedPosts, user: user.rows };
     
     res.send(response)
   } catch (error) {
