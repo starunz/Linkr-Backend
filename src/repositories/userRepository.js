@@ -22,10 +22,32 @@ async function getUserDataById(id) {
   `, [id]);
 }
 
-async function getUsers(like){
-    return connection.query(`
-        SELECT id, "userName", "photoUrl" FROM users WHERE LOWER("userName") LIKE $1
-    `, [`%${like}%`]);
+async function getUsers(id, username)
+{
+    const {rows: following} = await connection.query(`     
+      SELECT "userName", u.id, u."photoUrl"
+      FROM users u
+      INNER JOIN follows f on u.id = f.following
+      WHERE follower = $1 AND "userName" like $2
+      ORDER BY "userName" ASC; 
+    `,[id, `%${username}%`]);
+
+    let followingIds = [];
+    following.forEach(follow => followingIds.push(follow.id));
+    followingIds.push(id);
+    followingIds = followingIds.join(", ");
+    
+    const {rows: notFollowing} = await connection.query(`     
+    SELECT u."userName", u.id, u."photoUrl"
+     FROM users u 
+     WHERE u.id
+      NOT IN ( ${followingIds} )
+      AND "userName" like $1
+     order by "userName";
+    `,[`%${username}%`]);
+
+    return {following, notFollowing};
+
 }
 
 async function getUserPosts(id){
