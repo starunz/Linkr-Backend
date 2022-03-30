@@ -2,15 +2,15 @@ import urlMetadata from 'url-metadata';
 import { insertHashtags } from './hashtagsController.js';
 import addSpaceHashtagsStuck from '../utilityFunctions.js';
 import { postsRepository } from '../repositories/postsRepository.js';
-import { getIdUserByToken, selectFollowingsUsers } from '../repositories/followsRepository.js';
+import { selectFollowingsUsers } from '../repositories/followsRepository.js';
 
 export async function publishPosts(req, res) {
     const {userId, link, description} = req.body;
 
     const descriptionResolve = addSpaceHashtagsStuck(description);
 
-    const hashtags = (descriptionResolve.includes('#') ? (
-        descriptionResolve.match(/#[^\s#\.\;]*/gmi).map(x => x.substr(1).toLowerCase()) || [] 
+    const hashtags = (descriptionResolve.includes("#") ? (
+        descriptionResolve.match(/#[^\s#\.\;]*/gmi).map(x => x.substr(1).toLowerCase()) 
     ) : []);
 
     try {
@@ -190,8 +190,8 @@ export async function updatePosts(req, res){
 
     const descriptionResolve = addSpaceHashtagsStuck(description);
 
-    const hashtags = (descriptionResolve.includes('#') ? (
-        descriptionResolve.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [] 
+    const hashtags = (descriptionResolve.includes("#") ? (
+        descriptionResolve.match(/#[^\s#\.\;]*/gmi).map(x => x.substr(1).toLowerCase()) 
     ) : []);
 
     try {
