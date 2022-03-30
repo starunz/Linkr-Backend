@@ -32,6 +32,7 @@ export async function getPosts(req, res) {
     const { userId } = res.locals;
     const {hashtag} = req.query;
     let result = null;
+    let resultReposts = null;
     
     try {
         let followings = await selectFollowingsUsers(userId);
@@ -45,9 +46,12 @@ export async function getPosts(req, res) {
         else
         {
             result = await postsRepository.getPosts();
+            resultReposts = await postsRepository.getAllReposts();
         }
+        const totalPosts = [...result.rows, ...resultReposts.rows]
+        console.log(totalPosts)
         if(result.rows.length === 0) return res.send([]);
-        const posts = result.rows.filter(post => followings.includes(post.userId) || post.userId === userId);
+        const posts = totalPosts.filter(post => !post.userRepostId ? followings.includes(post.userId) || post.userId === userId : followings.includes(post.userRepostId) || post.userRepostId === userId);
         res.send(posts);
 
     } catch (error) {
