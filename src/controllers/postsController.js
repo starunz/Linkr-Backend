@@ -30,15 +30,12 @@ export async function publishPosts(req, res) {
 
 export async function getPosts(req, res) {
 
-    const { token } = res.locals;
+    const { userId } = res.locals;
     const {hashtag} = req.query;
-    let posts = null;
     let result = null;
-
+    
     try {
-        let idUser = await getIdUserByToken(token); 
-        idUser = idUser.rows[0].userId; 
-        let followings = await selectFollowingsUsers(idUser);
+        let followings = await selectFollowingsUsers(userId);
 
         followings = followings.rows.map(following => following.following);
 
@@ -50,7 +47,8 @@ export async function getPosts(req, res) {
         {
             result = await postsRepository.getPosts();
         }
-        const posts = result.rows.filter(post => followings.includes(post.userId) || post.userId === idUser);
+        if(result.rows.length === 0) return res.send([]);
+        const posts = result.rows.filter(post => followings.includes(post.userId) || post.userId === userId);
         res.send(posts);
 
     } catch (error) {
