@@ -23,7 +23,6 @@ export async function publishPosts(req, res) {
         res.sendStatus(201);
 
     } catch (error) {
-        console.log(error.message);
         res.sendStatus(500);
     }
 }
@@ -33,6 +32,7 @@ export async function getPosts(req, res) {
     const { userId } = res.locals;
     const {hashtag} = req.query;
     let result = null;
+    let resultReposts = null;
     
     try {
         let followings = await selectFollowingsUsers(userId);
@@ -46,13 +46,15 @@ export async function getPosts(req, res) {
         else
         {
             result = await postsRepository.getPosts();
+            resultReposts = await postsRepository.getAllReposts();
         }
+        const totalPosts = [...result.rows, ...resultReposts.rows]
+        
         if(result.rows.length === 0) return res.send([]);
-        const posts = result.rows.filter(post => followings.includes(post.userId) || post.userId === userId);
+        const posts = totalPosts.filter(post => !post.userRepostId ? followings.includes(post.userId) || post.userId === userId : followings.includes(post.userRepostId) || post.userRepostId === userId);
         res.send(posts);
 
     } catch (error) {
-        console.log(error.message);
         res.sendStatus(500);
     }
 
@@ -178,8 +180,6 @@ export async function deletePosts(req, res) {
         res.sendStatus(200);
 
     } catch (error) {
-
-        console.log(error.message);
         res.sendStatus(500);
     }
 }
@@ -204,7 +204,30 @@ export async function updatePosts(req, res){
         res.sendStatus(200);
 
     } catch (error) {
-        console.log(error.message);
+        res.sendStatus(500);
+    }
+}
+
+export async function repost(req, res){
+    const { userId, postId, userPosted } = req.body;
+
+    try {
+        await postsRepository.insertRepost(userId, postId, userPosted);
+
+        res.sendStatus(201);
+    } catch (error) {
+        res.sendStatus(500);
+    }
+}
+
+export async function getReposts(req, res){
+    const { postId } = req.params;
+
+    try {
+        const promise = await postsRepository.getReposts(postId);
+    
+        res.send(promise.rows)
+    } catch (error) {
         res.sendStatus(500);
     }
 }

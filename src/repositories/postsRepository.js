@@ -35,6 +35,18 @@ async function getPosts() {
         `);
 }
 
+async function getAllReposts(){
+    return connection.query(`
+            SELECT 
+            p.id, p.link, p.description, p."userId", p."imageLink", p."titleLink", p."descriptionLinK", re."createDate", 
+            upost."userName" author, upost."photoUrl", re."userId" "userRepostId", ur."userName" "userRepostName"
+            FROM reposts re
+            JOIN posts p ON p.id = re."postId"
+            JOIN users ur ON ur.id = re."userId"
+            JOIN users upost ON upost.id = p."userId"
+        `);
+}
+
 async function isLiked(postId, userId){
     return connection.query(`
             SELECT * 
@@ -109,6 +121,22 @@ async function updatePosts(descriptionResolve, postId){
         `, [descriptionResolve, postId]);
 }
 
+async function insertRepost(userId, postId, userPosted){
+    return connection.query(`
+        INSERT INTO
+        reposts ("userId", "postId", "userPosted")
+        VALUES ($1, $2, $3)
+    `, [userId, postId, userPosted])
+}
+
+async function getReposts(postId){
+    return connection.query(`
+        SELECT COUNT("userId")
+        FROM reposts
+        WHERE "postId" = $1
+    `, [postId])
+}
+
 export const postsRepository = {
     publishPosts,
     getPostByHashtag,
@@ -121,5 +149,8 @@ export const postsRepository = {
     whoLiked,
     deletePosts,
     deleteHashtagsByPostId,
-    updatePosts
+    updatePosts,
+    insertRepost,
+    getReposts,
+    getAllReposts
 }

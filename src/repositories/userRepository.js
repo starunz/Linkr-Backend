@@ -64,9 +64,21 @@ async function getUserPosts(id){
       WHERE "userId" = $1;
     `, [id]);
 
+    const userReposts = await connection.query(`
+      SELECT 
+      p.id, p.link, p.description, p."userId", p."imageLink", p."titleLink", p."descriptionLinK", re."createDate", 
+      upost."userName" author, upost."photoUrl", re."userId" "userRepostId", ur."userName" "userRepostName"
+      FROM reposts re
+      JOIN posts p ON p.id = re."postId"
+      JOIN users ur ON ur.id = re."userId"
+      JOIN users upost ON upost.id = p."userId"
+      WHERE re."userId" = $1
+    `, [id]); 
+
     return {
         user, 
-        userPosts
+        userPosts,
+        userReposts
     }
 }
 
