@@ -2,7 +2,8 @@ import { hashtagsRepository } from '../repositories/hashtagsRepository.js';
 
 export async function insertHashtags(hashtags, postId){
     for (const hashtag of hashtags) {
-        
+        if (hashtag === '') continue;
+         
         let hashtagId;
         try {
             hashtagId = await hashtagsRepository.insertHashtags(hashtag);

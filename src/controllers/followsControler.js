@@ -1,6 +1,5 @@
 import { 
     createFollow, 
-    getIdUserByToken, 
     selectFollowingsUsers,
     removeFollow,
 } from "../repositories/followsRepository.js";
@@ -38,11 +37,10 @@ export async function insertFollow(req, res){
 export async function deleteFollow(req, res) {
 
     const { followingId } = req.params;
-    const { token } = res.locals;
+    const { userId } = res.locals;
 
     try {
-        const { rows: idUser } = await getIdUserByToken(token); 
-        await removeFollow(idUser[0].userId, followingId);
+        await removeFollow(userId, followingId);
 
         res.sendStatus(200);
 

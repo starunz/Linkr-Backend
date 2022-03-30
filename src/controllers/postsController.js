@@ -2,14 +2,15 @@ import urlMetadata from 'url-metadata';
 import { insertHashtags } from './hashtagsController.js';
 import addSpaceHashtagsStuck from '../utilityFunctions.js';
 import { postsRepository } from '../repositories/postsRepository.js';
+import { selectFollowingsUsers } from '../repositories/followsRepository.js';
 
 export async function publishPosts(req, res) {
     const {userId, link, description} = req.body;
 
     const descriptionResolve = addSpaceHashtagsStuck(description);
 
-    const hashtags = (descriptionResolve.includes('#') ? (
-        descriptionResolve.match(/#[^\s#\.\;]*/gmi).map(x => x.substr(1).toLowerCase()) || [] 
+    const hashtags = (descriptionResolve.includes("#") ? (
+        descriptionResolve.match(/#[^\s#\.\;]*/gmi).map(x => x.substr(1).toLowerCase()) 
     ) : []);
 
     try {
@@ -29,10 +30,15 @@ export async function publishPosts(req, res) {
 
 export async function getPosts(req, res) {
 
+    const { userId } = res.locals;
     const {hashtag} = req.query;
-    let posts = null;
     let result = null;
+    
     try {
+        let followings = await selectFollowingsUsers(userId);
+
+        followings = followings.rows.map(following => following.following);
+
         if(hashtag)
         {
             result = await postsRepository.getPostByHashtag(hashtag);
@@ -41,8 +47,8 @@ export async function getPosts(req, res) {
         {
             result = await postsRepository.getPosts();
         }
-
-        posts = result.rows;
+        if(result.rows.length === 0) return res.send([]);
+        const posts = result.rows.filter(post => followings.includes(post.userId) || post.userId === userId);
         res.send(posts);
 
     } catch (error) {
@@ -184,8 +190,8 @@ export async function updatePosts(req, res){
 
     const descriptionResolve = addSpaceHashtagsStuck(description);
 
-    const hashtags = (descriptionResolve.includes('#') ? (
-        descriptionResolve.match(/#\w+/g).map(x => x.substr(1).toLowerCase()) || [] 
+    const hashtags = (descriptionResolve.includes("#") ? (
+        descriptionResolve.match(/#[^\s#\.\;]*/gmi).map(x => x.substr(1).toLowerCase()) 
     ) : []);
 
     try {
