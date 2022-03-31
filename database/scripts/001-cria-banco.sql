@@ -51,3 +51,10 @@ CREATE TABLE "reposts" (
     ON DELETE CASCADE,
     "createDate" TIMESTAMP DEFAULT NOW()
 );
+CREATE TABLE "comments" (
+    "id" SERIAL PRIMARY KEY,
+    "userId" INTEGER NOT NULL REFERENCES "users"("id"),
+    "postId" INTEGER NOT NULL REFERENCES "posts"("id")
+    ON DELETE CASCADE,
+    "text" TEXT NOT NULL
+);
