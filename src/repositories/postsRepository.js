@@ -20,7 +20,7 @@ async function getPostByHashtag(hashtag){
             GROUP BY description, author, "photoUrl", p.id
             ORDER BY p.id DESC
             LIMIT 20
-        `, [`%${hashtag}%`]);
+        `, [`%#${hashtag}%`]);
 }
 
 async function getPosts() {

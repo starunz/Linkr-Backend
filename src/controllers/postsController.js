@@ -48,7 +48,9 @@ export async function getPosts(req, res) {
             result = await postsRepository.getPosts();
             resultReposts = await postsRepository.getAllReposts();
         }
-        const totalPosts = [...result.rows, ...resultReposts.rows];
+        const totalPosts = (
+            resultReposts? [...result.rows, ...resultReposts.rows] : [...result.rows]
+        );
 
         const orderedPosts = totalPosts.sort(function (a, b) {
             if (a.createDate < b.createDate) {
@@ -65,6 +67,7 @@ export async function getPosts(req, res) {
         res.send(posts);
 
     } catch (error) {
+        console.log(error.message);
         res.sendStatus(500);
     }
 
