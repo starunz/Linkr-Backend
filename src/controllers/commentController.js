@@ -2,7 +2,8 @@ import { commentRepository } from "../repositories/commentRepository.js";
 
 export async function insertComment(req, res){
     const { postId } = req.params;
-    const { userId, text } = req.body;
+    const { text } = req.body;
+    const { userId } = res.locals;
 
     try {
         await commentRepository.createComment(userId, postId, text);
