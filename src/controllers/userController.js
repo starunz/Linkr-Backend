@@ -6,6 +6,11 @@ export async function createUser(req, res) {
 
   try {
     const existingUsers = await userRepository.selectUser(user.email);
+    const existingUserName = await userRepository.verifyUserName(user.username);
+
+    if (existingUserName.rowCount > 0) {
+      return res.status(409).send('username already exists')
+    }
     
     if (existingUsers.rowCount > 0) {
       return res.sendStatus(409);
