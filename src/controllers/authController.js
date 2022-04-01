@@ -8,7 +8,7 @@ export async function login(req, res) {
   const { rows: user } = await authRepository.verifyUser(email);
 
   if (user.length === 0) {
-    return res.sendStatus(204);
+    return res.sendStatus(404);
   }
 
   if (!bcrypt.compareSync(password, user[0].password)) {
