@@ -8,6 +8,14 @@ async function selectUser(userEmail) {
     `, [userEmail]);
 }
 
+async function verifyUserName(userName) {
+    return connection.query(`
+        SELECT  *
+        FROM users
+        WHERE "userName" = $1
+    `, [userName]);
+}
+
 async function createUser(user, passwordHash) {
     return connection.query(`
       INSERT INTO 
@@ -84,6 +92,7 @@ async function getUserPosts(id){
 
 export const userRepository = {
     selectUser,
+    verifyUserName,
     createUser,
     getUserDataById,
     getUsers,
