@@ -23,6 +23,7 @@ export async function publishPosts(req, res) {
         res.sendStatus(201);
 
     } catch (error) {
+        console.log(error.message);
         res.sendStatus(500);
     }
 }
@@ -30,10 +31,10 @@ export async function publishPosts(req, res) {
 export async function getPosts(req, res) {
 
     const { userId } = res.locals;
-    const {hashtag} = req.query;
+    const { hashtag, lastIndex } = req.query;
     let result = null;
     let resultReposts = null;
-    
+
     try {
         let followings = await selectFollowingsUsers(userId);
 
@@ -42,9 +43,15 @@ export async function getPosts(req, res) {
         if(hashtag)
         {
             result = await postsRepository.getPostByHashtag(hashtag);
-
             if (result.rows.length === 0) return res.send([]);
-            return res.send(result.rows);
+
+            const lastIdResult = result.rows[result.rows.length - 1]?.id;
+            const limitPosts = result.rows.splice(lastIndex, 10);
+            const lastIdLimitPosts = limitPosts[limitPosts.length - 1]?.id;
+            const compare = lastIdLimitPosts === lastIdResult;
+            const hasMore = (compare ? false : true);
+
+            return res.send({limitPosts, hasMore});
         }
         else
         {
@@ -63,10 +70,17 @@ export async function getPosts(req, res) {
             }
             return 0;
         });
-            
+
         if(result.rows.length === 0) return res.send([]);
         const posts = orderedPosts.filter(post => !post.userRepostId ? followings.includes(post.userId) || post.userId === userId : followings.includes(post.userRepostId) || post.userRepostId === userId);
-        return res.send(posts);
+        const lastIdPosts = posts[posts.length - 1]?.id;
+        const limitPosts = posts.splice(lastIndex, 10);
+        const lastIdLimitPosts = limitPosts[limitPosts.length - 1]?.id;
+
+        const compare = lastIdPosts === lastIdLimitPosts;
+        const hasMore = (compare ? false : true);
+
+        res.send({limitPosts, hasMore});
 
     } catch (error) {
         console.log(error.message);
