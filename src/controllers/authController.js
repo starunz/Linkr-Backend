@@ -4,13 +4,13 @@ import connection from "../db.js";
 
 export async function login(req, res) {
   const { email, password } = req.body;
-
+  
   const { rows: user } = await connection.query(
     "SELECT * FROM users WHERE email=$1",
     [email]
-  );
+    );
 
-  if (!user) {
+  if (user.length===0) {
     return res.sendStatus(401);
   }
 
