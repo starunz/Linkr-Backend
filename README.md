@@ -83,7 +83,7 @@ CREATE DATABASE linkr;
 
 
 ### Preparando setup
-In the main API folder, create a `.env` file in the same way as the file [`.env.example`](https://github.com/starunz/Linkr-Backend/.env.example).
+In the main API folder, create a `.env` file in the same way as the file [`.env.example`](https://github.com/starunz/Linkr-Backend/blob/main/.env.example).
 
 ### Initializing the API
 ```bash
